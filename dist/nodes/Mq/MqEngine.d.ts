@@ -3,6 +3,7 @@
  *
  * The mq-web WASM module is bundled directly in this package to avoid
  * runtime dependencies, which are not allowed for verified n8n community nodes.
+ * The WASM binary is inlined as base64 to avoid file system operations.
  */
 export interface MqRunOptions {
     isUpdate?: boolean;

@@ -4,6 +4,7 @@
  *
  * The mq-web WASM module is bundled directly in this package to avoid
  * runtime dependencies, which are not allowed for verified n8n community nodes.
+ * The WASM binary is inlined as base64 to avoid file system operations.
  */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.run = run;
@@ -11,8 +12,7 @@ exports.format = format;
 exports.diagnostics = diagnostics;
 exports.toAst = toAst;
 exports.definedValues = definedValues;
-const fs_1 = require("fs");
-const path_1 = require("path");
+const wasm_data_1 = require("./wasm-data");
 let mqModule = null;
 let wasmInitialized = false;
 /**
@@ -22,17 +22,9 @@ function initMqSync() {
     if (mqModule && wasmInitialized) {
         return mqModule;
     }
-    // Load the bundled WASM file
-    const wasmPath = (0, path_1.join)(__dirname, 'wasm', 'mq_wasm_bg.wasm');
-    let wasmBuffer;
-    try {
-        wasmBuffer = (0, fs_1.readFileSync)(wasmPath);
-    }
-    catch {
-        throw new Error("Could not find bundled mq_wasm_bg.wasm file at " + wasmPath);
-    }
+    // Get the WASM buffer from inlined base64 data
+    const wasmBuffer = (0, wasm_data_1.getWasmBuffer)();
     // Load the mq-web module
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const mq = require('./wasm/index.cjs');
     // Initialize synchronously with the WASM buffer
     mq.initSync({ module: wasmBuffer });

@@ -3,10 +3,10 @@
  *
  * The mq-web WASM module is bundled directly in this package to avoid
  * runtime dependencies, which are not allowed for verified n8n community nodes.
+ * The WASM binary is inlined as base64 to avoid file system operations.
  */
 
-import { readFileSync } from 'fs';
-import { join } from 'path';
+import { getWasmBuffer } from './wasm-data';
 
 // Type definitions for mq-web
 interface MqModule {
@@ -15,7 +15,7 @@ interface MqModule {
   diagnostics: (query: string) => Promise<MqDiagnostic[]>;
   toAst: (query: string) => Promise<string>;
   definedValues: (query: string, module?: string) => Promise<MqDefinedValue[]>;
-  initSync: (options: { module: Buffer }) => void;
+  initSync: (options: { module: Uint8Array }) => void;
 }
 
 export interface MqRunOptions {
@@ -52,15 +52,8 @@ function initMqSync(): MqModule {
     return mqModule;
   }
 
-  // Load the bundled WASM file
-  const wasmPath = join(__dirname, 'wasm', 'mq_wasm_bg.wasm');
-  let wasmBuffer: Buffer;
-
-  try {
-    wasmBuffer = readFileSync(wasmPath);
-  } catch {
-    throw new Error("Could not find bundled mq_wasm_bg.wasm file at " + wasmPath);
-  }
+  // Get the WASM buffer from inlined base64 data
+  const wasmBuffer = getWasmBuffer();
 
   // Load the mq-web module
   const mq = require('./wasm/index.cjs') as MqModule;
