@@ -1,13 +1,12 @@
 /**
  * MqEngine - Node.js wrapper for mq-web WASM module
  *
- * mq-web is designed for browsers and uses fetch to load its WASM file.
- * This wrapper patches fetch to work in Node.js by loading the WASM
- * file from the filesystem.
+ * The mq-web WASM module is bundled directly in this package to avoid
+ * runtime dependencies, which are not allowed for verified n8n community nodes.
  */
 
 import { readFileSync } from 'fs';
-import { join, dirname } from 'path';
+import { join } from 'path';
 
 // Type definitions for mq-web
 interface MqModule {
@@ -16,6 +15,7 @@ interface MqModule {
   diagnostics: (query: string) => Promise<MqDiagnostic[]>;
   toAst: (query: string) => Promise<string>;
   definedValues: (query: string, module?: string) => Promise<MqDefinedValue[]>;
+  initSync: (options: { module: Buffer }) => void;
 }
 
 export interface MqRunOptions {
@@ -42,91 +42,47 @@ export interface MqDefinedValue {
 }
 
 let mqModule: MqModule | null = null;
-let initPromise: Promise<void> | null = null;
 let wasmInitialized = false;
-let wasmBuffer: Buffer | null = null;
-let originalFetch: typeof fetch | null = null;
 
 /**
- * Setup fetch patch for WASM loading
+ * Initialize the mq WASM module for Node.js using initSync
  */
-function setupFetchPatch(): void {
-  if (originalFetch) return; // Already patched
-
-  // Find the WASM file
-  const possiblePaths = [
-    join(__dirname, '../../node_modules/mq-web/dist/mq_wasm_bg.wasm'),
-    join(__dirname, '../../../node_modules/mq-web/dist/mq_wasm_bg.wasm'),
-    join(dirname(require.resolve('mq-web')), 'mq_wasm_bg.wasm'),
-  ];
-
-  for (const wasmPath of possiblePaths) {
-    try {
-      wasmBuffer = readFileSync(wasmPath);
-      break;
-    } catch {
-      continue;
-    }
-  }
-
-  if (!wasmBuffer) {
-    throw new Error('Could not find mq_wasm_bg.wasm file');
-  }
-
-  // Store original fetch and patch it
-  originalFetch = globalThis.fetch;
-
-  // @ts-ignore
-  globalThis.fetch = async (input: unknown, init?: unknown) => {
-    const url = String(input);
-
-    if (url.includes('mq_wasm_bg.wasm') || url.endsWith('.wasm')) {
-      return new Response(wasmBuffer!, {
-        status: 200,
-        headers: { 'Content-Type': 'application/wasm' },
-      });
-    }
-
-    return originalFetch!(input as Parameters<typeof fetch>[0], init as Parameters<typeof fetch>[1]);
-  };
-}
-
-/**
- * Initialize the mq WASM module for Node.js
- */
-async function initMq(): Promise<MqModule> {
+function initMqSync(): MqModule {
   if (mqModule && wasmInitialized) {
     return mqModule;
   }
 
-  if (initPromise) {
-    await initPromise;
-    return mqModule!;
+  // Load the bundled WASM file
+  const wasmPath = join(__dirname, 'wasm', 'mq_wasm_bg.wasm');
+  let wasmBuffer: Buffer;
+
+  try {
+    wasmBuffer = readFileSync(wasmPath);
+  } catch {
+    throw new Error("Could not find bundled mq_wasm_bg.wasm file at " + wasmPath);
   }
 
-  initPromise = (async () => {
-    setupFetchPatch();
-    const mq = await import('mq-web');
-    mqModule = mq as unknown as MqModule;
-  })();
+  // Load the mq-web module
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mq = require('./wasm/index.cjs') as MqModule;
 
-  await initPromise;
-  return mqModule!;
+  // Initialize synchronously with the WASM buffer
+  mq.initSync({ module: wasmBuffer });
+
+  mqModule = mq;
+  wasmInitialized = true;
+
+  return mqModule;
 }
 
 /**
- * Ensure WASM is loaded
+ * Get the initialized mq module
  */
-async function ensureWasmLoaded(): Promise<void> {
-  if (wasmInitialized) return;
-
-  const mq = await initMq();
-  await mq.format('.h');
-  wasmInitialized = true;
-
-  if (originalFetch) {
-    globalThis.fetch = originalFetch;
+function getMq(): MqModule {
+  if (!mqModule || !wasmInitialized) {
+    return initMqSync();
   }
+  return mqModule;
 }
 
 /**
@@ -137,8 +93,7 @@ export async function run(
   content: string,
   options?: MqRunOptions,
 ): Promise<string> {
-  await ensureWasmLoaded();
-  const mq = await initMq();
+  const mq = getMq();
   return mq.run(query, content, {
     isUpdate: false,
     inputFormat: 'markdown',
@@ -153,8 +108,7 @@ export async function run(
  * Format an mq query
  */
 export async function format(query: string): Promise<string> {
-  await ensureWasmLoaded();
-  const mq = await initMq();
+  const mq = getMq();
   return mq.format(query);
 }
 
@@ -162,8 +116,7 @@ export async function format(query: string): Promise<string> {
  * Get diagnostics for an mq query
  */
 export async function diagnostics(query: string): Promise<MqDiagnostic[]> {
-  await ensureWasmLoaded();
-  const mq = await initMq();
+  const mq = getMq();
   return mq.diagnostics(query);
 }
 
@@ -171,8 +124,7 @@ export async function diagnostics(query: string): Promise<MqDiagnostic[]> {
  * Get the AST of an mq query
  */
 export async function toAst(query: string): Promise<string> {
-  await ensureWasmLoaded();
-  const mq = await initMq();
+  const mq = getMq();
   return mq.toAst(query);
 }
 
@@ -183,7 +135,6 @@ export async function definedValues(
   query: string,
   module?: string,
 ): Promise<MqDefinedValue[]> {
-  await ensureWasmLoaded();
-  const mq = await initMq();
+  const mq = getMq();
   return mq.definedValues(query, module);
 }

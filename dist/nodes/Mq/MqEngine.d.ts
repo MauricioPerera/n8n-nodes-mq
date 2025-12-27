@@ -1,9 +1,8 @@
 /**
  * MqEngine - Node.js wrapper for mq-web WASM module
  *
- * mq-web is designed for browsers and uses fetch to load its WASM file.
- * This wrapper patches fetch to work in Node.js by loading the WASM
- * file from the filesystem.
+ * The mq-web WASM module is bundled directly in this package to avoid
+ * runtime dependencies, which are not allowed for verified n8n community nodes.
  */
 export interface MqRunOptions {
     isUpdate?: boolean;

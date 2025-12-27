@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mq",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "n8n community node for processing Markdown using mq query language - filter, transform and extract structured data from Markdown files",
   "author": {
     "name": "Mauricio Perera",
@@ -25,7 +25,7 @@
   "main": "dist/index.js",
   "type": "commonjs",
   "scripts": {
-    "build": "tsc && shx cp nodes/Mq/*.svg dist/nodes/Mq/",
+    "build": "tsc && shx cp nodes/Mq/*.svg dist/nodes/Mq/ && shx cp -r nodes/Mq/wasm dist/nodes/Mq/",
     "dev": "tsc --watch",
     "lint": "eslint nodes --ext .ts",
     "lintfix": "eslint nodes --ext .ts --fix",
@@ -41,9 +41,6 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "mq-web": "^0.5.8"
-  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "@typescript-eslint/parser": "^8.0.0",
