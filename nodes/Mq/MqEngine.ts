@@ -63,7 +63,6 @@ function initMqSync(): MqModule {
   }
 
   // Load the mq-web module
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const mq = require('./wasm/index.cjs') as MqModule;
 
   // Initialize synchronously with the WASM buffer
