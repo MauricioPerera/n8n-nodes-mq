@@ -1,6 +1,3 @@
-/* tslint:disable */
-/* eslint-disable */
-
 type DefinedValueType = 'Function' | 'Variable';
 
 interface DefinedValue {

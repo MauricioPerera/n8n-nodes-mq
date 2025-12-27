@@ -16,6 +16,7 @@ export class Mq implements INodeType {
 		icon: 'file:mq.svg',
 		group: ['transform'],
 		version: 1,
+		usableAsTool: true,
 		subtitle: '={{$parameter["operation"]}}',
 		description: 'Process Markdown using mq query language - filter, transform and extract data like jq for JSON',
 		defaults: {
@@ -53,7 +54,7 @@ export class Mq implements INodeType {
 				type: 'string',
 				default: '.h',
 				required: true,
-				description: 'The mq query. Examples: .h (headers), .h2, .code, .blockquote',
+				description: 'The mq query. Examples: .h (headers), .h2, .code, .blockquote.',
 				displayOptions: { show: { operation: ['query', 'extractSections', 'format', 'validate'] } },
 			},
 			{
@@ -158,7 +159,7 @@ export class Mq implements INodeType {
 						const diags = await diagnostics(query);
 						const isValid = diags.length === 0;
 						let ast: string | undefined;
-						if (isValid) { try { ast = await toAst(query); } catch {} }
+						if (isValid) { try { ast = await toAst(query); } catch { /* AST generation failed, continue without it */ } }
 						result = { success: true, valid: isValid, query, diagnostics: diags, ...(ast && { ast }) };
 						break;
 					}

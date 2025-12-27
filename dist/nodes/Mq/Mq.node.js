@@ -11,6 +11,7 @@ class Mq {
             icon: 'file:mq.svg',
             group: ['transform'],
             version: 1,
+            usableAsTool: true,
             subtitle: '={{$parameter["operation"]}}',
             description: 'Process Markdown using mq query language - filter, transform and extract data like jq for JSON',
             defaults: {
@@ -48,7 +49,7 @@ class Mq {
                     type: 'string',
                     default: '.h',
                     required: true,
-                    description: 'The mq query. Examples: .h (headers), .h2, .code, .blockquote',
+                    description: 'The mq query. Examples: .h (headers), .h2, .code, .blockquote.',
                     displayOptions: { show: { operation: ['query', 'extractSections', 'format', 'validate'] } },
                 },
                 {
@@ -151,7 +152,7 @@ class Mq {
                             try {
                                 ast = await (0, MqEngine_1.toAst)(query);
                             }
-                            catch { }
+                            catch { /* AST generation failed, continue without it */ }
                         }
                         result = { success: true, valid: isValid, query, diagnostics: diags, ...(ast && { ast }) };
                         break;

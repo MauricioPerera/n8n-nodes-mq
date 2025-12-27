@@ -24,7 +24,8 @@ function initMqSync() {
     }
     // Get the WASM buffer from inlined base64 data
     const wasmBuffer = (0, wasm_data_1.getWasmBuffer)();
-    // Load the mq-web module
+    // Load the mq-web module (CommonJS module requires require() for sync loading)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const mq = require('./wasm/index.cjs');
     // Initialize synchronously with the WASM buffer
     mq.initSync({ module: wasmBuffer });

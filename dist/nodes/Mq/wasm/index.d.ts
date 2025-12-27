@@ -1,8 +1,5 @@
 export { definedValues, diagnostics, format, run, toAst } from './core.js';
 
-/* tslint:disable */
-/* eslint-disable */
-
 type DefinedValueType = 'Function' | 'Variable';
 
 interface DefinedValue {
