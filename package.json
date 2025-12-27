@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-mq",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "n8n community node for processing Markdown using mq query language - filter, transform and extract structured data from Markdown files",
   "author": {
     "name": "Mauricio Perera",
